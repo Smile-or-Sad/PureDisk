@@ -1,0 +1,17 @@
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Local files & analysis temp data
+.gemini/
+large_files.json
+
+# User migrated files & media
+QQ视频/
+*.mp4
+*.zip
+*.exe

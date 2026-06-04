@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PureDisk - 零依赖原生磁盘清理大师 & 空间分析仪</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <!-- Google Fonts Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Background Glowing Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Global SVG Filters for UI Glow Effects -->
+  <svg style="position: absolute; width: 0; height: 0; pointer-events: none;" width="0" height="0">
+    <defs>
+      <linearGradient id="neon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#a855f7" /> <!-- Purple -->
+        <stop offset="50%" stop-color="#6366f1" /> <!-- Indigo -->
+        <stop offset="100%" stop-color="#06b6d4" /> <!-- Cyan -->
+      </linearGradient>
+      <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="6" result="blur" />
+        <feComponentTransfer in="blur" result="glow1">
+          <feFuncA type="linear" slope="0.6" />
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode in="glow1" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="container">
+    
+    <!-- Top Navigation Header -->
+    <header class="glass-header">
+      <div class="logo-section">
+        <div class="logo-icon-container">
+          <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <!-- P Stem -->
+            <path d="M6 4v16" stroke="url(#neon-grad)" stroke-width="2.5"/>
+            <!-- Disk Platter (forming the P's loop) -->
+            <path d="M6 4h7a5 5 0 0 1 5 5v0a5 5 0 0 1-5 5H6" stroke="url(#neon-grad)" stroke-width="2.5" filter="url(#neon-glow)"/>
+            <!-- Concentric disk tracks -->
+            <circle cx="12.5" cy="9" r="3" stroke="rgba(255, 255, 255, 0.3)" stroke-width="0.8" stroke-dasharray="1.5 1.5"/>
+            <circle cx="12.5" cy="9" r="1" fill="#fff"/>
+            <!-- Actuator arm (needle) scanning the platter -->
+            <path d="M6 14l4.5-3.5 1.5.5" stroke="var(--color-cyan)" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div>
+          <h1>PureDisk</h1>
+          <span class="sub-logo">零依赖原生轻量磁盘空间管理系统</span>
+        </div>
+      </div>
+      <div class="status-badge" id="system-status-container">
+        <span class="status-dot" id="system-status-dot"></span>
+        <span id="system-status-text">系统准备就绪</span>
+      </div>
+    </header>
+
+    <!-- Main Overview Grid -->
+    <div class="overview-grid">
+      
+      <!-- Left Card: Circular Gauge -->
+      <div class="glass-card storage-chart-card">
+        <div class="card-header">
+          <h3 class="section-title">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+            磁盘容量状态
+          </h3>
+        </div>
+        
+        <div class="storage-chart-container">
+          <svg class="circle-chart" viewBox="0 0 36 36">
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="circle-progress" id="circle-progress-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="url(#neon-grad)" filter="url(#neon-glow)" />
+          </svg>
+          <div class="chart-text">
+            <span class="chart-percent" id="chart-percent-text">--%</span>
+            <span class="chart-label">已使用空间</span>
+          </div>
+        </div>
+
+        <div class="storage-details">
+          <div class="storage-detail-item">
+            <span class="label">可用空间</span>
+            <div class="value color-cyan" id="disk-free-val">-- GB</div>
+          </div>
+          <div class="storage-detail-item">
+            <span class="label">已用空间</span>
+            <div class="value color-purple" id="disk-used-val">-- GB</div>
+          </div>
+          <div class="storage-detail-item">
+            <span class="label">总容量</span>
+            <div class="value color-white" id="disk-total-val">-- GB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Card: Quick Clean Options -->
+      <div class="glass-card quick-clean-section">
+        <div>
+          <h3 class="section-title">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            常规垃圾一键扫描与清理
+          </h3>
+          <p class="section-desc">
+            智能识别并安全清除系统临时文件、应用残留及日志缓存，绝不影响您的任何个人数据与核心文件。
+          </p>
+
+          <div class="target-list" id="quick-scan-targets">
+            <!-- Dynamic Targets Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-secondary" id="btn-quick-scan">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            扫描临时文件
+          </button>
+          <button class="btn btn-primary" id="btn-clean-safe">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+            安全一键清理
+          </button>
+          <button class="btn btn-wechat" id="btn-clean-wechat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            专清微信缓存
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Deep Scan Configuration & Logging Card -->
+    <div class="glass-card deep-scan-config-card">
+      <div class="deep-scan-header">
+        <div class="header-text-group">
+          <h3 class="section-title">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            大文件及目录深度扫描 (Deep Scan)
+          </h3>
+          <p class="section-desc">
+            以极速并发引擎递归检索指定目录下的大文件夹（如 `node_modules`）和大文件，支持以可视百分比展示文件占比。
+          </p>
+        </div>
+
+        <div class="scan-input-group">
+          <input type="text" class="scan-input" id="scan-path-input" value="C:\Users\Alexander" placeholder="输入扫描目标目录">
+          <button class="btn btn-primary" id="btn-deep-scan">开始深度扫描</button>
+          <button class="btn btn-danger" id="btn-cancel-scan" style="display: none;">取消</button>
+        </div>
+      </div>
+
+      <!-- Realtime scanning status panel -->
+      <div class="progress-panel" id="progress-panel" style="display: none;">
+        <div class="progress-panel-header">
+          <span id="progress-phase-text">扫描进行中...</span>
+          <span class="progress-percent" id="progress-percent-val">--%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+        <div class="progress-stats-row">
+          <div class="progress-stat-item">已扫描大小: <span class="stat-highlight" id="prog-stat-size">0 MB</span></div>
+          <div class="progress-stat-item">文件总数: <span class="stat-highlight" id="prog-stat-files">0</span></div>
+          <div class="progress-stat-item">文件夹总数: <span class="stat-highlight" id="prog-stat-folders">0</span></div>
+          <div class="progress-stat-item">耗时: <span class="stat-highlight" id="prog-stat-time">0s</span></div>
+        </div>
+        <div class="current-scanning-file" id="current-scanning-file-text">
+          当前扫描：C:\Users\Alexander
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanning Results Listing Grid -->
+    <div class="results-grid">
+      
+      <!-- Left side: Large folders -->
+      <div class="results-column">
+        <div class="column-header">
+          <span class="title-with-count">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            超大文件夹 Top 50
+          </span>
+          <span class="count-badge" id="folder-count-lbl">共 0 个</span>
+        </div>
+        <div class="list-container" id="large-folders-list">
+          <div class="empty-state">
+            <span class="empty-state-icon">📂</span>
+            <p>暂无扫描数据</p>
+            <span class="empty-state-sub">在上方指定路径并启动“深度扫描”</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Large files -->
+      <div class="results-column">
+        <div class="column-header">
+          <span class="title-with-count">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            超大文件 Top 50
+          </span>
+          <span class="count-badge" id="file-count-lbl">共 0 个</span>
+        </div>
+        <div class="list-container" id="large-files-list">
+          <div class="empty-state">
+            <span class="empty-state-icon">📄</span>
+            <p>暂无扫描数据</p>
+            <span class="empty-state-sub">在上方指定路径并启动“深度扫描”</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Delete Confirmation Modal Dialog -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-card">
+      <div class="modal-icon">⚠️</div>
+      <h3 class="modal-title" id="modal-title-text">确认彻底删除此项吗？</h3>
+      <div class="modal-body">
+        <p id="modal-body-warn-text">此操作将会把该项目从硬盘中永久删除（跳过回收站），且无法恢复！</p>
+        <p class="modal-path-container" id="modal-target-path"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modal-btn-cancel">取消</button>
+        <button class="btn btn-danger" id="modal-btn-confirm">确认永久删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/public/app.js"></script>
+</body>
+</html>
