@@ -72,11 +72,16 @@
       
       <!-- Left Card: Circular Gauge -->
       <div class="glass-card storage-chart-card">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           <h3 class="section-title">
             <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
             磁盘容量状态
           </h3>
+          <div class="drive-select-container">
+            <select id="drive-select" class="drive-select">
+              <option value="C">本地磁盘 (C:)</option>
+            </select>
+          </div>
         </div>
         
         <div class="storage-chart-container">

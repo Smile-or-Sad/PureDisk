@@ -4,6 +4,7 @@ let quickScanResults = [];
 let deepScanInterval = null;
 let pendingDeletePath = null;
 let pendingDeleteType = null; // 'file' or 'folder' or 'quick'
+let userHomeDir = '';
 
 // Helper: Format bytes to human readable string
 function formatBytes(bytes, decimals = 2) {
@@ -23,6 +24,7 @@ const chartPercentText = document.getElementById('chart-percent-text');
 const circleProgressPath = document.getElementById('circle-progress-path');
 const systemStatusDot = document.getElementById('system-status-dot');
 const systemStatusText = document.getElementById('system-status-text');
+const driveSelect = document.getElementById('drive-select');
 
 const quickScanTargets = document.getElementById('quick-scan-targets');
 const btnQuickScan = document.getElementById('btn-quick-scan');
@@ -57,11 +59,39 @@ const modalBtnConfirm = document.getElementById('modal-btn-confirm');
 
 // Initial Load
 window.addEventListener('DOMContentLoaded', async () => {
-  fetchDiskSpace();
+  await fetchAvailableDrives();
   loadQuickScanInitial();
   setupEventListeners();
   await fetchUserInfo();
 });
+
+// Fetch available drives dynamically
+async function fetchAvailableDrives() {
+  try {
+    const res = await fetch('/api/available-drives');
+    const data = await res.json();
+    if (data.success && data.drives) {
+      driveSelect.innerHTML = '';
+      data.drives.forEach(drv => {
+        const opt = document.createElement('option');
+        opt.value = drv.drive;
+        opt.textContent = drv.label;
+        if (drv.isSystem) {
+          opt.selected = true;
+        }
+        driveSelect.appendChild(opt);
+      });
+      // Initial fetch for selected drive
+      if (driveSelect.value) {
+        fetchDiskSpace(driveSelect.value);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch available drives:', err);
+    // fallback C
+    fetchDiskSpace('C');
+  }
+}
 
 // Fetch user home path dynamically
 async function fetchUserInfo() {
@@ -69,14 +99,18 @@ async function fetchUserInfo() {
     const res = await fetch('/api/user-info');
     const data = await res.json();
     if (data.success && data.homeDir) {
-      scanPathInput.value = data.homeDir;
-      currentScanningFileText.textContent = `当前扫描：${data.homeDir}`;
+      userHomeDir = data.homeDir;
+      const currentDrive = driveSelect.value || 'C';
+      const systemDriveLetter = userHomeDir.charAt(0).toUpperCase();
+      if (currentDrive.toUpperCase() === systemDriveLetter) {
+        scanPathInput.value = userHomeDir;
+        currentScanningFileText.textContent = `当前扫描：${userHomeDir}`;
+      }
     }
   } catch (err) {
     console.error('Failed to fetch user info:', err);
   }
 }
-
 
 // Setup Listeners
 function setupEventListeners() {
@@ -85,6 +119,21 @@ function setupEventListeners() {
   btnCleanWechat.addEventListener('click', runWeChatCleanup);
   btnDeepScan.addEventListener('click', startDeepScan);
   btnCancelScan.addEventListener('click', cancelDeepScan);
+
+  // Drive select dropdown listener
+  driveSelect.addEventListener('change', () => {
+    const selectedDrive = driveSelect.value;
+    fetchDiskSpace(selectedDrive);
+    
+    // Automatically set default scan path input
+    const systemDriveLetter = userHomeDir ? userHomeDir.charAt(0).toUpperCase() : 'C';
+    if (selectedDrive.toUpperCase() === systemDriveLetter) {
+      scanPathInput.value = userHomeDir || 'C:\\';
+    } else {
+      scanPathInput.value = `${selectedDrive}:\\`;
+    }
+    currentScanningFileText.textContent = `当前扫描：${scanPathInput.value}`;
+  });
 
   // Modal Cancel
   modalBtnCancel.addEventListener('click', () => {
@@ -98,10 +147,10 @@ function setupEventListeners() {
 }
 
 // 1. Fetch Disk Space Information
-async function fetchDiskSpace() {
+async function fetchDiskSpace(drive = 'C') {
   setSystemStatus('正在获取磁盘空间...', 'scanning');
   try {
-    const res = await fetch('/api/disk-space');
+    const res = await fetch(`/api/disk-space?drive=${drive}`);
     const data = await res.json();
     if (data.success) {
       currentDiskData = data;

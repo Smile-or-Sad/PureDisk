@@ -37,15 +37,16 @@ function runPowerShell(cmd) {
   });
 }
 
-// Check C drive space
-async function getDiskSpace() {
+// Check drive space (driveLetter is like 'C' or mount point on Unix)
+async function getDiskSpace(driveLetter = 'C') {
   const isWin = process.platform === 'win32';
   
   if (!isWin) {
     // Fallback for non-Windows platforms (e.g. macOS / Linux)
+    const mountPoint = driveLetter === 'C' ? '/' : driveLetter;
     try {
       return new Promise((resolve) => {
-        exec("df -k /", (error, stdout) => {
+        exec(`df -k "${mountPoint}"`, (error, stdout) => {
           if (error) {
             resolve({ success: false, error: error.message });
             return;
@@ -67,8 +68,9 @@ async function getDiskSpace() {
     }
   }
 
+  const letter = driveLetter.replace(/[^a-zA-Z]/g, '').toUpperCase() || 'C';
   try {
-    const output = await runPowerShell('Get-Volume -DriveLetter C | Select-Object Size, SizeRemaining | ConvertTo-Json');
+    const output = await runPowerShell(`Get-Volume -DriveLetter ${letter} | Select-Object Size, SizeRemaining | ConvertTo-Json`);
     const data = JSON.parse(output);
     return {
       success: true,
@@ -77,10 +79,10 @@ async function getDiskSpace() {
       used: data.Size - data.SizeRemaining
     };
   } catch (err) {
-    console.error('Error getting disk space:', err);
+    console.error(`Error getting disk space for drive ${letter}:`, err);
     // Fallback using Get-PSDrive
     try {
-      const output = await runPowerShell('Get-PSDrive C | Select-Object Used, Free | ConvertTo-Json');
+      const output = await runPowerShell(`Get-PSDrive ${letter} | Select-Object Used, Free | ConvertTo-Json`);
       const data = JSON.parse(output);
       // PSDrive outputs in bytes
       const free = data.Free;
@@ -90,6 +92,43 @@ async function getDiskSpace() {
     } catch (err2) {
       return { success: false, error: err2.message };
     }
+  }
+}
+
+// Get all available disk drives
+async function getAvailableDrives() {
+  const isWin = process.platform === 'win32';
+  if (!isWin) {
+    // Fallback for macOS / Linux: return root '/'
+    return [
+      { drive: 'C', label: 'Root (/)', total: 0, free: 0, used: 0, isSystem: true }
+    ];
+  }
+
+  try {
+    const output = await runPowerShell('Get-Volume | Where-Object DriveLetter | Select-Object DriveLetter, FileSystemLabel, Size, SizeRemaining | ConvertTo-Json');
+    if (!output) {
+      return [{ drive: 'C', label: '本地磁盘 (C:)', total: 0, free: 0, used: 0, isSystem: true }];
+    }
+    let parsed = JSON.parse(output);
+    if (!Array.isArray(parsed)) {
+      parsed = [parsed];
+    }
+    return parsed.map(vol => {
+      const letter = vol.DriveLetter;
+      const label = vol.FileSystemLabel ? `${vol.FileSystemLabel} (${letter}:)` : `本地磁盘 (${letter}:)`;
+      return {
+        drive: letter,
+        label: label,
+        total: vol.Size || 0,
+        free: vol.SizeRemaining || 0,
+        used: (vol.Size - vol.SizeRemaining) || 0,
+        isSystem: letter.toUpperCase() === 'C'
+      };
+    });
+  } catch (err) {
+    console.error('Error listing available drives:', err);
+    return [{ drive: 'C', label: '本地磁盘 (C:)', total: 0, free: 0, used: 0, isSystem: true }];
   }
 }
 
@@ -545,9 +584,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 0b. Get available drives
+  if (method === 'GET' && url.pathname === '/api/available-drives') {
+    try {
+      const drives = await getAvailableDrives();
+      sendJSON(200, { success: true, drives });
+    } catch (e) {
+      sendJSON(500, { success: false, error: e.message });
+    }
+    return;
+  }
+
   // 1. Get disk space
   if (method === 'GET' && url.pathname === '/api/disk-space') {
-    const space = await getDiskSpace();
+    const drive = url.searchParams.get('drive') || 'C';
+    const space = await getDiskSpace(drive);
     sendJSON(space.success ? 200 : 500, space);
     return;
   }
