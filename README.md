@@ -1,55 +1,99 @@
-# PureDisk - 零依赖极速原生磁盘清理大师与空间分析仪
+# PureDisk
 
-一个超轻量、零外部依赖、高并发并行的 C 盘空间深度分析与安全一键清理工具。
-
----
-
-## 核心特性
-
-- 零依赖运行：不用安装任何 npm 包，node_modules 占用 0 字节，拉取或复制后即可直接双击启动，非常适合 C 盘爆满、无法安装大型依赖的紧急情况。
-- 超性能并发扫描：
-  - 后端扫描引擎采用原生 Node.js 异步并发重构，引入信号量限流控制。
-  - 在完全压榨 SSD 随机读取性能、扫描速度提升的同等情况下，避免了因并发文件过多触发的句柄耗尽报错。
-- 软链接与联接点环路保护：
-  - 自动通过 realpath 对物理路径进行解析去重。
-  - 避免 Windows 下软链接或文件夹联接点导致的无限递归死循环。
-- 现代霓虹磨砂玻璃仪表盘：
-  - 界面采用极极质感的深色磨砂玻璃设计，伴有缓动的背景弥散发光光斑。
-  - 主图表和状态使用原生 SVG 配合高斯模糊滤镜，呈现发光质感。
-- 自适应实时进度条：
-  - 扫描进度条自动与 C 盘已用总空间大小进行自适应配对，进度百分比随着已扫描体积顺滑攀升。
-- 可视化占比指示条：
-  - 深度扫描检索出 Top 50 大文件与大文件夹时，会在列表项下方自动生成空间占比进度条，直观展示空间分配。
-- 安全的一键清理与微信专清：
-  - 自动清空系统临时文件、日志、浏览器缓存、Npm/Pip 缓存包等安全垃圾。
-  - 微信专清：智能定位微信的临时网络缓存、网页附件等，不影响微信核心聊天记录和本地音视频文件。
-- 资源管理器联动：
-  - 网页端可一键定位大文件，在 Windows 文件资源管理器中打开并自动高亮选中该文件，或进行永久物理删除。
+PureDisk is a lightweight, zero-dependency, highly concurrent disk scanning, space analysis, and cleanup tool.
+PureDisk 是一款超轻量、零依赖、高并发的磁盘扫描、空间分析与清理工具。
 
 ---
 
-## 快速启动
+## English
 
-只需您的电脑上安装了 Node.js：
+### Core Features
 
-### Windows 用户
-- 直接双击运行根目录下的 `start.bat` 即可，它会自动在后台启动服务，并拉起默认浏览器打开控制面板。
+- Zero Dependencies: Runs out of the box with zero npm packages and a 0-byte node_modules folder.
+- High-Performance Scanning: Built with native asynchronous file operations and optimized concurrency control using semaphores to prevent file descriptor exhaustion.
+- Loop Prevention: Automatically resolves physical paths to prevent infinite recursion caused by Windows folder junction points.
+- Modern Glassmorphism Dashboard: Premium dark-mode user interface with blurred background highlights, featuring SVG-based status displays and visual components.
+- Adaptive Progress Tracking: Real-time scan progress calculated dynamically against total used C drive space.
+- Visualization Bars: Automatically generates percentage bars for the top 50 largest files and folders.
+- Safe One-Click Cleanup: Safely deletes temporary directory files, system logs, browser cache, and package manager cache.
+- WeChat Cleanup: Targets WeChat cache, temporary files, and downloaded attachments without affecting chat logs or media database.
+- Explorer Integration: Open file locations directly in Windows Explorer, highlighting selected items, or permanently delete files.
 
-### macOS 与 Linux 用户
-1. 在终端赋予脚本执行权限并启动：
+### Quick Start
+
+Ensure Node.js is installed on your computer.
+
+#### Windows
+- Double-click `start.bat` in the root directory to run the server and open the dashboard in your default browser.
+
+#### macOS & Linux
+1. Grant execute permissions and run the script:
    ```bash
    chmod +x start.sh
    ./start.sh
    ```
-2. 或者手动运行 node 服务：
+2. Or run the server manually:
    ```bash
    node server.js
    ```
-   随后在浏览器中手动打开：`http://localhost:3000`。
+   Open `http://localhost:3000` in your web browser.
+
+### Project Structure
+
+```text
+├── public/
+│   ├── index.html   # Dashboard layout
+│   ├── style.css    # Modern glassmorphism styling
+│   └── app.js       # Status polling, rendering, and logic
+├── server.js        # Zero-dependency local backend server
+├── start.bat        # Windows launcher script
+├── start.sh         # macOS & Linux launcher script
+├── .gitignore       # Git exclusion configurations
+├── LICENSE          # MIT license file
+└── README.md        # Description document
+```
+
+### Portability and Compatibility
+
+- Dynamic Path Resolution: Dynamically resolves user directory paths instead of hardcoded paths.
+- Cross-Platform Base: Core scanning is optimized for Windows with compatibility built-in for macOS and Linux.
 
 ---
 
-## 项目结构
+## 中文
+
+### 核心特性
+
+- 零依赖运行：无需安装任何 npm 依赖包，node_modules 占用 0 字节，非常适合紧急磁盘空间释放场景。
+- 高并发扫描：基于原生异步文件操作，并内置信号量并发限流，避免因并发文件过多触发句柄耗尽报错。
+- 环路保护：自动解析物理路径，防止 Windows 文件夹联接点引起无限循环。
+- 霓虹磨砂玻璃仪表盘：极具质感的深色磨砂玻璃设计，背景发光光斑，搭配 SVG 与高斯模糊滤镜。
+- 自适应进度：扫描进度与已用空间动态关联，百分比随扫描体积顺滑上升。
+- 可视化占比：Top 50 大文件与大文件夹列表自带空间占比指示条，直观展示空间分配。
+- 安全清理：清理系统临时文件、日志、浏览器缓存和包管理器缓存等垃圾。
+- 微信专清：精准清除微信缓存与临时文件，不影响聊天记录和本地音视频文件。
+- 文件管理器联动：网页端支持一键在文件资源管理器中定位并选中文件，或进行物理删除。
+
+### 快速启动
+
+请确保系统已安装 Node.js。
+
+#### Windows 用户
+- 双击运行根目录下的 `start.bat` 即可，会自动启动服务并拉起默认浏览器。
+
+#### macOS 与 Linux 用户
+1. 赋予执行权限并运行：
+   ```bash
+   chmod +x start.sh
+   ./start.sh
+   ```
+2. 或手动运行：
+   ```bash
+   node server.js
+   ```
+   然后打开浏览器访问 `http://localhost:3000`。
+
+### 项目结构
 
 ```text
 ├── public/
@@ -64,31 +108,13 @@
 └── README.md        # 本说明文档
 ```
 
----
+### 移植性说明
 
-## 移植性说明
-
-本项目已完成全面兼容性与移植性优化：
-- 动态路径解析：移除了所有硬编码路径，通过 Node.js 原生动态获取当前计算机的用户目录，支持在任何 Windows 电脑上即拷即用。
-- 跨平台基础结构：核心磁盘扫描 and 文件管理接口针对 Windows 做了最佳原生调优，并且包含了在 macOS 与 Linux 上运行的基础兼容性。
+- 动态路径解析：通过原生获取当前用户目录，无任何硬编码路径，支持在不同电脑上即拷即用。
+- 跨平台支持：核心接口针对 Windows 优化，同时兼容 macOS 和 Linux 系统。
 
 ---
 
-## 推送到 GitHub
+## License / 开源许可证
 
-1. 在网页端登录 GitHub，创建一个名为 PureDisk 的新仓库。
-2. 打开终端，进入本项目所在的文件夹目录：
-   ```bash
-   git init
-   git add .
-   git commit -m "feat: init PureDisk zero-dependency disk analyzer"
-   git remote add origin <你的仓库URL>
-   git branch -M main
-   git push -u origin main
-   ```
-
----
-
-## 开源许可证
-
-本项目采用 MIT 开源许可证。
+MIT License
