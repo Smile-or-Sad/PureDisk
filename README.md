@@ -3,6 +3,11 @@
 PureDisk is a lightweight, zero-dependency, highly concurrent disk scanning, space analysis, and cleanup tool.
 PureDisk 是一款超轻量、零依赖、高并发的磁盘扫描、空间分析与清理工具。
 
+> [!IMPORTANT]
+> **Do not close the command prompt or terminal window after starting.** The backend server runs inside this window. Closing it will terminate the service and render the web dashboard non-functional. You may minimize the window to your taskbar during use.
+>
+> **启动后切勿关闭命令行或终端窗口。** 后端服务在该窗口中运行，关闭该窗口将终止清理服务并导致网页控制台失效。在使用过程中请将该窗口最小化至任务栏。
+
 ---
 
 ## English
