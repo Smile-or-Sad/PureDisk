@@ -65,6 +65,30 @@ window.addEventListener('DOMContentLoaded', async () => {
   await fetchUserInfo();
 });
 
+// Heartbeat mechanism to detect backend offline
+let isOffline = false;
+setInterval(async () => {
+  try {
+    const res = await fetch('/api/user-info');
+    if (!res.ok) throw new Error('Not OK');
+    if (isOffline) {
+      isOffline = false;
+      document.getElementById('offline-overlay').classList.remove('active');
+      document.getElementById('offline-overlay').style.display = 'none';
+      if (systemStatusText.textContent === '引擎离线') {
+        setSystemStatus('系统准备就绪', 'idle');
+      }
+    }
+  } catch (err) {
+    if (!isOffline) {
+      isOffline = true;
+      document.getElementById('offline-overlay').style.display = 'flex';
+      setTimeout(() => { document.getElementById('offline-overlay').classList.add('active'); }, 10);
+      setSystemStatus('引擎离线', 'error');
+    }
+  }
+}, 2000);
+
 // Fetch available drives dynamically
 async function fetchAvailableDrives() {
   try {
@@ -209,7 +233,8 @@ async function runQuickScan() {
   setSystemStatus('常规文件扫描中...', 'scanning');
 
   try {
-    const res = await fetch('/api/quick-scan');
+    const selectedDrive = driveSelect.value || 'C';
+    const res = await fetch(`/api/quick-scan?drive=${selectedDrive}`);
     const data = await res.json();
     if (data.success) {
       quickScanResults = data.targets;
@@ -269,7 +294,12 @@ async function runSafeCleanup() {
     setSystemStatus('正在安全清理临时文件...', 'scanning');
     btnCleanSafe.disabled = true;
     try {
-      const res = await fetch('/api/clean-safe', { method: 'POST' });
+      const selectedDrive = driveSelect.value || 'C';
+      const res = await fetch('/api/clean-safe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drive: selectedDrive })
+      });
       const data = await res.json();
       if (data.success) {
         alert(`清理完成！共释放空间: ${formatBytes(data.deletedSize)}。成功删除 ${data.deletedCount} 个文件，${data.failedCount} 个文件由于被其他程序占用未删除。`);

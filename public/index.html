@@ -245,6 +245,18 @@
     </div>
   </div>
 
+  <!-- Offline Overlay -->
+  <div class="modal-overlay" id="offline-overlay" style="display: none; z-index: 9999; backdrop-filter: blur(10px);">
+    <div class="modal-card" style="text-align: center;">
+      <div class="modal-icon" style="color: var(--color-danger);">🔌</div>
+      <h3 class="modal-title">服务已断开连接</h3>
+      <div class="modal-body">
+        <p>后端的命令提示符 (cmd) 窗口似乎已被意外关闭。</p>
+        <p style="margin-top: 1rem; color: var(--color-warn);">请重新双击 <strong>start.bat</strong> 来启动服务，<strong>并且请勿关闭弹出的黑色 cmd 窗口！</strong></p>
+      </div>
+    </div>
+  </div>
+
   <script src="/public/app.js"></script>
 </body>
 </html>

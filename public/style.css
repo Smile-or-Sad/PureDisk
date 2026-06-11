@@ -790,9 +790,8 @@ body {
   font-size: 0.7rem;
   color: var(--text-muted);
   font-family: monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-all;
+  white-space: normal;
   display: block;
   width: 100%;
 }
