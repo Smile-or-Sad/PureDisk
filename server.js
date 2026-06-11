@@ -230,32 +230,9 @@ async function getDirectorySize(dirPath) {
 }
 
 // Quick Scan function
-async function performQuickScan(driveLetter = 'C') {
-  const isWin = process.platform === 'win32';
-  const isSystemDrive = isWin ? (driveLetter.toUpperCase() === (process.env.SystemDrive ? process.env.SystemDrive.charAt(0).toUpperCase() : 'C')) : true;
-
-  let targetsToScan = [];
-  if (isSystemDrive) {
-    targetsToScan = QUICK_SCAN_TARGETS;
-  } else {
-    targetsToScan = [
-      {
-        name: `Recycle Bin (回收站)`,
-        path: `${driveLetter}:\\$RECYCLE.BIN`,
-        category: 'temp',
-        safeToClean: true
-      },
-      {
-        name: `Temp Files (临时文件)`,
-        path: `${driveLetter}:\\Temp`,
-        category: 'temp',
-        safeToClean: true
-      }
-    ];
-  }
-
+async function performQuickScan() {
   const results = [];
-  for (const target of targetsToScan) {
+  for (const target of QUICK_SCAN_TARGETS) {
     if (fs.existsSync(target.path)) {
       const stats = await getDirectorySize(target.path);
       results.push({
@@ -629,8 +606,7 @@ const server = http.createServer(async (req, res) => {
   // 2. Run Quick Scan
   if (method === 'GET' && url.pathname === '/api/quick-scan') {
     try {
-      const drive = url.searchParams.get('drive') || 'C';
-      const results = await performQuickScan(drive);
+      const results = await performQuickScan();
       sendJSON(200, { success: true, targets: results });
     } catch (e) {
       sendJSON(500, { success: false, error: e.message });
@@ -679,41 +655,13 @@ const server = http.createServer(async (req, res) => {
 
   // 6. Clean safe temp files (Quick Cleanup)
   if (method === 'POST' && url.pathname === '/api/clean-safe') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', async () => {
-      try {
-        const params = JSON.parse(body || '{}');
-        const drive = params.drive || 'C';
-        const isWin = process.platform === 'win32';
-        const isSystemDrive = isWin ? (drive.toUpperCase() === (process.env.SystemDrive ? process.env.SystemDrive.charAt(0).toUpperCase() : 'C')) : true;
+    try {
+      let totalDeletedSize = 0;
+      let totalDeletedCount = 0;
+      let totalFailedCount = 0;
+      const details = [];
 
-        let targetsToClean = [];
-        if (isSystemDrive) {
-          targetsToClean = QUICK_SCAN_TARGETS;
-        } else {
-          targetsToClean = [
-            {
-              name: `Recycle Bin (回收站)`,
-              path: `${drive}:\\$RECYCLE.BIN`,
-              category: 'temp',
-              safeToClean: true
-            },
-            {
-              name: `Temp Files (临时文件)`,
-              path: `${drive}:\\Temp`,
-              category: 'temp',
-              safeToClean: true
-            }
-          ];
-        }
-
-        let totalDeletedSize = 0;
-        let totalDeletedCount = 0;
-        let totalFailedCount = 0;
-        const details = [];
-
-        for (const target of targetsToClean) {
+      for (const target of QUICK_SCAN_TARGETS) {
         if (target.safeToClean && fs.existsSync(target.path)) {
           const res = await cleanDirectoryContents(target.path);
           totalDeletedSize += res.deletedSize;
@@ -729,17 +677,16 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-        sendJSON(200, {
-          success: true,
-          deletedSize: totalDeletedSize,
-          deletedCount: totalDeletedCount,
-          failedCount: totalFailedCount,
-          details
-        });
-      } catch (e) {
-        sendJSON(500, { success: false, error: e.message });
-      }
-    });
+      sendJSON(200, {
+        success: true,
+        deletedSize: totalDeletedSize,
+        deletedCount: totalDeletedCount,
+        failedCount: totalFailedCount,
+        details
+      });
+    } catch (e) {
+      sendJSON(500, { success: false, error: e.message });
+    }
     return;
   }
 
